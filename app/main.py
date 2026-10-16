@@ -1,5 +1,5 @@
 from random import randrange
-from typing import Optional
+from typing import Optional, List
 import time
 
 from fastapi import Body, FastAPI,Response, status, HTTPException, Depends
@@ -20,17 +20,17 @@ app=FastAPI()
 
 
 
-while True:
-    try:
-        conn = psycopg2.connect(host='localhost', database='fastapi', user='postgres', password='password'
-                    , cursor_factory=RealDictCursor)
-        cursor=conn.cursor()
-        print("Database connection was succesfull!")
-        break
-    except Exception as error:
-        print("Connecting to database failed")    
-        print("Error: ", error)
-        time.sleep(3)
+# while True:
+#     try:
+#         conn = psycopg2.connect(host='localhost', database='fastapi', user='postgres', password='password'
+#                     , cursor_factory=RealDictCursor)
+#         cursor=conn.cursor()
+#         print("Database connection was succesfull!")
+#         break
+#     except Exception as error:
+#         print("Connecting to database failed")    
+#         print("Error: ", error)
+#         time.sleep(3)
 
 
 
@@ -56,7 +56,7 @@ def find_post_index(id):
     return None         
 
  
-@app.get("/posts")
+@app.get("/posts", response_model=List[schemas.Post])
 def get_post(db: Session = Depends(get_db)):
     # this belwo two lines where use to find the posts from the database suing direct query qithout using any ORM
     # cursor.execute("""select * from posts""")
@@ -73,7 +73,7 @@ def get_latest_post():
     post=my_post[len(my_post)-1]
     return {"detail": post}
 
-@app.get("/posts/{id}")
+@app.get("/posts/{id}", response_model=schemas.Post)
 def get_post(id: int, db: Session = Depends(get_db)):
     #the two line below used direct sql qury with psycopg adapter to find indivula posts form the database
     # cursor.execute("""select * from posts where id = %s""", (id,))
@@ -89,7 +89,7 @@ def get_post(id: int, db: Session = Depends(get_db)):
 
 
 
-@app.post("/posts", status_code=status.HTTP_201_CREATED)
+@app.post("/posts", status_code=status.HTTP_201_CREATED, response_model=schemas.Post)
 def create_post(post : schemas.CreatePost, db: Session = Depends(get_db)):
     #this three line below where used to insert data to databse using direct sql query
     # cursor.execute("""insert into posts(title, content, published) VALUES(%s, %s, %s) returning *""", (post.title, post.content, post.published))
@@ -121,7 +121,7 @@ def delete_post(id:int, db: Session = Depends(get_db)):
 
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
-@app.put("/posts/{id}", status_code=status.HTTP_202_ACCEPTED)
+@app.put("/posts/{id}", status_code=status.HTTP_202_ACCEPTED, response_model=schemas.Post)
 def update_post(id: int, updated_post :schemas.CreatePost, db: Session = Depends(get_db)):
     # updating posts from databse using direct sql query by psycopg adapter
     # cursor.execute(""" update posts Set title=%s, content=%s, published=%s where id=%s returning *""", (post.title, post.content, post.published, str(id),))
